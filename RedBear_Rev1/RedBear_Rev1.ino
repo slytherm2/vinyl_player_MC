@@ -15,7 +15,6 @@
 
 #include <nRF5x_BLE_API.h>
 
-#define DEVICE_NAME            "BLE_Peripheral"
 #define TXRX_BUF_LEN           20
 
 #define DIGITAL_OUT_PIN                   D2
