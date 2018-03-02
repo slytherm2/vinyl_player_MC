@@ -41,7 +41,7 @@ uint8_t tx_value[TXRX_BUF_LEN] = {0,};
 uint8_t rx_value[TXRX_BUF_LEN] = {0,};
 
 // Initialize value of chars
-GattCharacteristic  characteristic1(service1_tx_uuid, tx_value, 1, TXRX_BUF_LEN, GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE_WITHOUT_RESPONSE );
+GattCharacteristic  characteristic1(service1_tx_uuid, tx_value, 1, TXRX_BUF_LEN, GattCharacteristic::BLE_GATT_FORMAT_UINT16);
 GattCharacteristic  characteristic2(service1_rx_uuid, rx_value, 1, TXRX_BUF_LEN, GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
 GattCharacteristic *uartChars[] = {&characteristic1, &characteristic2};
 GattService        uartService(service1_uuid, uartChars, sizeof(uartChars) / sizeof(GattCharacteristic *));
@@ -52,7 +52,7 @@ void disconnectionCallBack(const Gap::DisconnectionCallbackParams_t *params) {
   ble.startAdvertising();
 }
 
-void gattServerWriteCallBack(const GattWriteCallbackParams *Handler) {
+void processCommand(const GattWriteCallbackParams *Handler) {
   uint8_t buf[TXRX_BUF_LEN];
   uint8_t index;
   uint16_t bytesRead = TXRX_BUF_LEN;
@@ -92,7 +92,7 @@ void uart_handle(uint32_t id, SerialIrq event) {   /* Serial rx IRQ */
     }
   }
 }
-void connectedCb(const Gap::ConnectionCallbackParams_t*) {
+void connectedCallback(const Gap::ConnectionCallbackParams_t*) {
  Serial.println("Yooooooo!");  
  ble.stopAdvertising();
 }
@@ -106,7 +106,7 @@ static const uint16_t uuid16_list[] = {GattService::UUID_HEART_RATE_SERVICE};
 
 void bleInitComplete(BLE::InitializationCompleteCallbackContext *params){
   ble.onDisconnection(disconnectionCallBack);
-  ble.onDataWritten(gattServerWriteCallBack);
+  ble.onDataWritten(processCommand);
 
   // setup adv_data and srp_data
   //ble.accumulateAdvertisingPayload(GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
@@ -123,7 +123,7 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params){
   // add service
   ble.addService(uartService);
   // set device name
-  ble.setDeviceName((const uint8_t *)"W.A.R.P");
+  ble.setDeviceName((const uint8_t *)"W.A.R.P.");
   // set connect params
   ble.setPreferredConnectionParams(&conn_params);
   // set tx power,valid values are -40, -20, -16, -12, -8, -4, 0, 4
@@ -134,7 +134,7 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params){
   ble.setAdvertisingTimeout(0);
   // start advertising
   ble.startAdvertising();
-  ble.onConnection(connectedCb);
+  ble.onConnection(connectedCallback);
   Serial.println("Advertising Start!");
 }
 void setup() {
