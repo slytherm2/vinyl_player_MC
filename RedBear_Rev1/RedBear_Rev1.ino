@@ -102,39 +102,39 @@ static Gap::ConnectionParams_t conn_params = {
   .slaveLatency = 0,
   .connectionSupervisionTimeout = 1000
 };
-static const uint16_t uuid16_list[] = {GattService::UUID_HEART_RATE_SERVICE};
+static const uint16_t uuid16_list[] = {0xFFFF};
 
 void bleInitComplete(BLE::InitializationCompleteCallbackContext *params){
-  ble.onDisconnection(disconnectionCallBack);
-  ble.onDataWritten(processCommand);
-
+  ble.gap().onDisconnection(disconnectionCallBack);
+  ble.gattServer().onDataWritten(processCommand);
+  
   // setup adv_data and srp_data
   //ble.accumulateAdvertisingPayload(GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
   //ble.accumulateAdvertisingPayload(GapAdvertisingData::SHORTENED_LOCAL_NAME,
   //                                 (const uint8_t *)"TXRX", sizeof("TXRX") - 1);
   //ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_128BIT_SERVICE_IDS,
   //                                (const uint8_t *)uart_base_uuid_rev, sizeof(uart_base_uuid_rev));
-  ble.accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
-  ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t*)uuid16_list, sizeof(uuid16_list));
-  ble.accumulateAdvertisingPayload(GapAdvertisingData::GENERIC_MEDIA_PLAYER);
-  ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)DEVICE_NAME, sizeof(DEVICE_NAME));
+  ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
+  ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t*)uuid16_list, sizeof(uuid16_list));
+  ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::GENERIC_MEDIA_PLAYER);
+  ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t *)DEVICE_NAME, sizeof(DEVICE_NAME));
   // set adv_type
-  ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
+  ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
   // add service
   ble.addService(uartService);
   // set device name
-  ble.setDeviceName((const uint8_t *)"W.A.R.P.");
+  //ble.setDeviceName((const uint8_t *)"W.A.R.P.");
   // set connect params
-  ble.setPreferredConnectionParams(&conn_params);
+  //ble.setPreferredConnectionParams(&conn_params);
   // set tx power,valid values are -40, -20, -16, -12, -8, -4, 0, 4
   ble.setTxPower(4);
   // set adv_interval, 100ms in multiples of 0.625ms.
-  ble.setAdvertisingInterval(160);
+  ble.gap().setAdvertisingInterval(160);
   // set adv_timeout, in seconds
-  ble.setAdvertisingTimeout(0);
-  // start advertising
-  ble.startAdvertising();
+  //ble.setAdvertisingTimeout(0);
   ble.onConnection(connectedCallback);
+  // start advertising
+  ble.gap().startAdvertising();
   Serial.println("Advertising Start!");
 }
 void setup() {
@@ -143,7 +143,7 @@ void setup() {
   Serial.attach(uart_handle);
   
   ble.init(bleInitComplete);
-
+  while (ble.hasInitialized()  == false)
   pinMode(DIGITAL_OUT_PIN, OUTPUT);
  
 }
