@@ -22,8 +22,9 @@
 #define PWM_PIN                           D4
 #define SERVO_PIN                         A2
 #define ANALOG_IN_PIN                     A4
-
+#define VertStep1                         10
 #define DEVICE_NAME       "W.A.R.P."
+
 BLE                           ble;
 Timeout                       timeout;
 
@@ -31,12 +32,38 @@ static uint8_t rx_buf[TXRX_BUF_LEN];
 static uint8_t rx_buf_num;
 static uint8_t rx_state=0;
 
+
+// The uuid of service and characteristics
+// Service UUID, TX, RX: 713d0000-503e-4c75-ba94-3148f18d941e
+// base UUID: 00002902-0000-1000-8000-00805f9b34fb
+static const uint8_t service1_uuid[] = {0x37, 0x31, 0x33, 0x64, 0x30, 0x30, 0x30, 0x30, 0x2d,
+                                          0x35, 0x30, 0x33, 0x65, 0x2d, 
+                                          0x34, 0x63, 0x37, 0x35, 0x2d, 
+                                          0x62, 0x61, 0x39, 0x34, 0x2d,
+                                          0x33, 0x31, 0x34, 0x38, 0x66, 0x31, 0x38, 0x64, 0x39, 0x34, 0x31, 0x65};
+static const uint8_t service1_tx_uuid[] = {0x37, 0x31, 0x33, 0x64, 0x30, 0x30, 0x30, 0x30, 0x2d,
+                                          0x35, 0x30, 0x33, 0x65, 0x2d, 
+                                          0x34, 0x63, 0x37, 0x35, 0x2d, 
+                                          0x62, 0x61, 0x39, 0x34, 0x2d,
+                                          0x33, 0x31, 0x34, 0x38, 0x66, 0x31, 0x38, 0x64, 0x39, 0x34, 0x31, 0x65};
+static const uint8_t service1_rx_uuid[] = {0x37, 0x31, 0x33, 0x64, 0x30, 0x30, 0x30, 0x30, 0x2d,
+                                          0x35, 0x30, 0x33, 0x65, 0x2d, 
+                                          0x34, 0x63, 0x37, 0x35, 0x2d, 
+                                          0x62, 0x61, 0x39, 0x34, 0x2d,
+                                          0x33, 0x31, 0x34, 0x38, 0x66, 0x31, 0x38, 0x64, 0x39, 0x34, 0x31, 0x65};
+static const uint8_t uart_base_uuid_rev[] = {0x30, 0x30, 0x30, 0x30, 0x32, 0x39, 0x30, 0x32, 0x2d,
+                                           0x30, 0x30, 0x30, 0x30, 0x2d, 
+                                           0x31, 0x30, 0x30, 0x30, 0x2d,
+                                           0x38, 0x30, 0x30, 0x30, 0x2d,
+                                           0x30, 0x30, 0x38, 0x30, 0x35, 0x66, 0x39, 0x62, 0x33, 0x34, 0x66, 0x62};
+                                           
+/*
 // The uuid of service and characteristics
 static const uint8_t service1_uuid[] = {0x71, 0x3D, 0, 0, 0x50, 0x3E, 0x4C, 0x75, 0xBA, 0x94, 0x31, 0x48, 0xF1, 0x8D, 0x94, 0x1E};
 static const uint8_t service1_tx_uuid[] = {0x71, 0x3D, 0, 3, 0x50, 0x3E, 0x4C, 0x75, 0xBA, 0x94, 0x31, 0x48, 0xF1, 0x8D, 0x94, 0x1E};
 static const uint8_t service1_rx_uuid[] = {0x71, 0x3D, 0, 2, 0x50, 0x3E, 0x4C, 0x75, 0xBA, 0x94, 0x31, 0x48, 0xF1, 0x8D, 0x94, 0x1E};
 static const uint8_t uart_base_uuid_rev[] = {0x1E, 0x94, 0x8D, 0xF1, 0x48, 0x31, 0x94, 0xBA, 0x75, 0x4C, 0x3E, 0x50, 0, 0, 0x3D, 0x71};
-
+*/
 uint8_t tx_value[TXRX_BUF_LEN] = {0,};
 uint8_t rx_value[TXRX_BUF_LEN] = {0,};
 
@@ -68,7 +95,8 @@ void processCommand(const GattWriteCallbackParams *Handler) {
   }
 }
 
-void m_uart_rx_handle() {  //update characteristic data
+void m_uart_rx_handle() 
+{  //update characteristic data
   ble.updateCharacteristicValue(characteristic2.getValueAttribute().getHandle(), rx_buf, rx_buf_num);
   memset(rx_buf, 0x00,20);
   rx_state = 0;
@@ -123,9 +151,9 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params){
   // add service
   ble.addService(uartService);
   // set device name
-  //ble.setDeviceName((const uint8_t *)"W.A.R.P.");
+  ble.setDeviceName((const uint8_t *)"W.A.R.P.");
   // set connect params
-  //ble.setPreferredConnectionParams(&conn_params);
+  ble.setPreferredConnectionParams(&conn_params);
   // set tx power,valid values are -40, -20, -16, -12, -8, -4, 0, 4
   ble.setTxPower(4);
   // set adv_interval, 100ms in multiples of 0.625ms.
@@ -137,11 +165,13 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params){
   ble.gap().startAdvertising();
   Serial.println("Advertising Start!");
 }
-void setup() {
+void setup() 
+{
   // put your setup code here, to run once
   Serial.begin(9600);
   Serial.attach(uart_handle);
-  
+  pinMode(VertStep1, OUTPUT);
+  pinMode(D13, OUTPUT);
   ble.init(bleInitComplete);
   while (ble.hasInitialized()  == false)
   pinMode(DIGITAL_OUT_PIN, OUTPUT);
@@ -150,6 +180,16 @@ void setup() {
 
 void loop() {
     ble.waitForEvent();
+   /* 
+while(true) {
+    digitalWrite(VertStep1, HIGH);
+    digitalWrite(D13, HIGH);
+    wait(1000);
+    digitalWrite(VertStep1, LOW);
+    digitalWrite(D13, LOW);
+    wait(1000);
+}
+*/
 }
 
 void queue_song() {
